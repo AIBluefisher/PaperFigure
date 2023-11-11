@@ -266,11 +266,12 @@
             }
         }
 
-        function magnifies(imgIDs, zoom) {
+        function magnifies(imgIDs, zoom, n_scenes) {
             var images = [];
             var glasses = [];
             var num_images = imgIDs.length;
             var w, h, bw;
+            var img_ind = 0;
 
             for (var i = 0; i < num_images; i++) {
                 var image = document.getElementById(imgIDs[i]);
@@ -298,6 +299,9 @@
             // and also for touch screens
             first_glasses.addEventListener("touchmove", moveMagnifier);
             first_image.addEventListener("touchmove", moveMagnifier);
+            // Change images when click.
+            first_glasses.addEventListener("click", nextImage);
+            first_image.addEventListener("click", nextImage);
 
             bw = 3;
             w = first_glasses.offsetWidth / 2;
@@ -329,11 +333,11 @@
 
                     glasses[i].style.left = (images[i].offsetLeft + x - w) + "px";
                     glasses[i].style.top = (images[i].offsetTop + y - h) + "px";
-                    console.log("glasses[%d] - left: %d, top: %d", i, glasses[i].style.left, glasses[i].style.top);
+                    // console.log("glasses[%d] - left: %d, top: %d", i, glasses[i].style.left, glasses[i].style.top);
 
                     // display what the magnifier glass "sees".
                     glasses[i].style.backgroundPosition = "-" + ((x * zoom) - w + bw) + "px -" + ((y * zoom) - h + bw) + "px";
-                    console.log("glass[%d] background position: %s", i, glasses[i].style.backgroundPosition);
+                    // console.log("glass[%d] background position: %s", i, glasses[i].style.backgroundPosition);
                 }
 
                 e = e || window.event;
@@ -346,6 +350,19 @@
                         glasses[i].style.backgroundImage = "";
                         glasses[i].style.border = "0px";
                     }
+                }
+            }
+
+            function nextImage(e) {
+                e.preventDefault();
+                console.log("clicked!");
+
+                img_ind = (((img_ind + 1) < n_scenes) ? img_ind + 1 : 0);
+                // Change images.
+                for (var i = 0; i < num_images; i++) {
+                    images[i].src = images[i].dataset.image + ("000" + img_ind).slice(-3) + ".png";
+                    // Change zoomed in patches.
+                    glasses[i].style.backgroundImage = "url('" + images[i].src + "')";
                 }
             }
 
@@ -396,7 +413,8 @@
                 <!-- Images -->
                 <div id="imageQualityScreenshotDiv" class="img-zoom-container" align="center">
                   <figure display="inline-block">
-                    <div class="img-zoom-lens"></div><img id="ground_truth" src="./src/imgs/gt/000.png" data-image="./src/imgs/gt/">
+                    <div class="img-zoom-lens"></div>
+                    <img id="ground_truth" src="./src/imgs/gt/000.png" data-image="./src/imgs/gt/">
                     <figcaption>Ground Truth</figcaption>
                   </figure>
                   <figure display="inline-block">
@@ -414,31 +432,10 @@
                 </div>
             
                 <br/>
-                <button class="styled-button" onclick="takeImageQualityScreenshot()">Take Screenshot</button>
-                <script>
-                    function takeImageQualityScreenshot() {
-                        // Get the target div
-                        const divToCapture = document.getElementById('imageQualityScreenshotDiv');
-            
-                        // Use html2canvas to capture the content of the div
-                        html2canvas(divToCapture, { useCORS: true }).then(canvas => {
-                            // Convert the canvas content to a data URL
-                            const dataUrl = canvas.toDataURL('image/png');
-            
-                            // Create a link element to download the screenshot
-                            const downloadLink = document.createElement('a');
-                            downloadLink.href = dataUrl;
-                            downloadLink.download = 'screenshot.png';
-            
-                            // Append the link to the document and trigger the download
-                            document.body.appendChild(downloadLink);
-                            downloadLink.click();
-            
-                            // Clean up: remove the link from the document
-                            document.body.removeChild(downloadLink);
-                        });
-                    }
-                </script>
+                <button class="styled-button" onclick="takeImageQualityScreenshot()">
+                    Take Screenshot
+                </button>
+
                 <br/> <br/>
             </div>
           </div>
@@ -450,57 +447,40 @@
                 Magnifier
             </label>
             <div class="tab-content">
+                <div class="venue"><p> <b>Hover over image</b> to move the zoomed in patch; 
+                    <b>Click on ground-truth image</b> to switch to a different image</p>
+                </div>
+                <br>
+
                 <div id="imageMagnifyScreenshotDiv" class="img-zoom-container" align="center">
                     <figure display="inline-block">
                       <div class="""></div>
-                      <img id="refimage" src="./src/imgs/gt/000.png" data-image="./src/imgs/gt/">
+                      <img id="gt_image" src="./src/imgs/gt/000.png" data-image="./src/imgs/gt/">
                       <figcaption>Ground Truth</figcaption>
                     </figure>
                     <figure display="inline-block">
                       <div class="""></div>
-                      <img id="refimage1" src="./src/imgs/barf/000.png" data-image="./src/imgs/barf/">
+                      <img id="method1_image" src="./src/imgs/barf/000.png" data-image="./src/imgs/barf/">
                       <!-- <img id="refimage1" src="./src/imgs/gt/000.png" data-image="./src/imgs/gt/"> -->
                       <figcaption>BARF</figcaption>
                     </figure>
                     <figure display="inline-block">
                       <div class="""></div>
-                      <img id="refimage2" src="./src/imgs/ibrnet/000.png" data-image="./src/imgs/ibrnet/">
+                      <img id="method2_image" src="./src/imgs/ibrnet/000.png" data-image="./src/imgs/ibrnet/">
                       <!-- <img id="refimage2" src="./src/imgs/gt/000.png" data-image="./src/imgs/gt/"> -->
                       <figcaption>IBRNet</figcaption>
                     </figure>
                     <figure display="inline-block">
                       <div class="""></div>
-                      <img id="refimage3" src="./src/imgs/dbarf/000.png" data-image="./src/imgs/dbarf/">
+                      <img id="method3_image" src="./src/imgs/dbarf/000.png" data-image="./src/imgs/dbarf/">
                       <!-- <img id="refimage3" src="./src/imgs/gt/000.png" data-image="./src/imgs/gt/"> -->
                       <figcaption>Ours</figcaption>
                     </figure>
-                  </div>
-                  <br/>
-                  <button class="styled-button" onclick="takeImageMagnifyScreenshot()">Take Screenshot</button>
-                  <script>
-                      function takeImageMagnifyScreenshot() {
-                          // Get the target div
-                          const divToCapture = document.getElementById('imageMagnifyScreenshotDiv');
-            
-                          // Use html2canvas to capture the content of the div
-                          html2canvas(divToCapture, { useCORS: true }).then(canvas => {
-                              // Convert the canvas content to a data URL
-                              const dataUrl = canvas.toDataURL('image/png');
-            
-                              // Create a link element to download the screenshot
-                              const downloadLink = document.createElement('a');
-                              downloadLink.href = dataUrl;
-                              downloadLink.download = 'screenshot.png';
-            
-                              // Append the link to the document and trigger the download
-                              document.body.appendChild(downloadLink);
-                              downloadLink.click();
-            
-                              // Clean up: remove the link from the document
-                              document.body.removeChild(downloadLink);
-                          });
-                      }
-                  </script>
+                </div>
+                <br/>
+                <button class="styled-button" onclick="takeImageMagnifyScreenshot()">
+                    Take Screenshot
+                </button>
             
             </div>
           </div>
@@ -512,6 +492,10 @@
                 Image Tables
             </label>
             <div class="tab-content">
+                <div class="venue"><p> <b>Replace the Videos</b> by your own images.
+                </div>
+                <br>
+
                 <div id="imageTableDiv" class="text" style="padding: 5px 5px 5px 5px;">
                     <!-- <table class="caption" style="width: 100%; margin: 0 auto -2pt auto; font-size: 80%;">
                         <tbody><tr>
@@ -540,31 +524,9 @@
                     </br> -->
                 </div>
                 <br>
-                <button class="styled-button" onclick="takeImageTableScreenshot()">Take Screenshot</button>
-                <script>
-                    function takeImageTableScreenshot() {
-                        // Get the target div
-                        const divToCapture = document.getElementById('imageTableDiv');
-            
-                        // Use html2canvas to capture the content of the div
-                        html2canvas(divToCapture, { useCORS: true }).then(canvas => {
-                            // Convert the canvas content to a data URL
-                            const dataUrl = canvas.toDataURL('image/png');
-            
-                            // Create a link element to download the screenshot
-                            const downloadLink = document.createElement('a');
-                            downloadLink.href = dataUrl;
-                            downloadLink.download = 'screenshot.png';
-            
-                            // Append the link to the document and trigger the download
-                            document.body.appendChild(downloadLink);
-                            downloadLink.click();
-            
-                            // Clean up: remove the link from the document
-                            document.body.removeChild(downloadLink);
-                        });
-                    }
-                </script>
+                <button class="styled-button" onclick="takeImageTableScreenshot()">
+                    Take Screenshot
+                </button>
                 <br>
             </div>
           </div>
@@ -586,31 +548,9 @@
                 </div>
                 </br>
             
-                <button class="styled-button" onclick="takeImageSliderScreenshot()">Take Screenshot</button>
-                <script>
-                    function takeImageSliderScreenshot() {
-                        // Get the target div
-                        const divToCapture = document.getElementById('imageSliderScreenshotDiv');
-                        
-                        // Use html2canvas to capture the content of the div
-                        html2canvas(divToCapture, { useCORS: true }).then(canvas => {
-                            // Convert the canvas content to a data URL
-                            const dataUrl = canvas.toDataURL('image/png');
-                            
-                            // Create a link element to download the screenshot
-                            const downloadLink = document.createElement('a');
-                            downloadLink.href = dataUrl;
-                            downloadLink.download = 'screenshot.png';
-                            
-                            // Append the link to the document and trigger the download
-                            document.body.appendChild(downloadLink);
-                            downloadLink.click();
-                            
-                            // Clean up: remove the link from the document
-                            document.body.removeChild(downloadLink);
-                        });
-                    }
-                </script>
+                <button class="styled-button" onclick="takeImageSliderScreenshot()">
+                    Take Screenshot
+                </button>
             </div>
           </div>
         </div>
@@ -620,13 +560,10 @@
 
 
 <script>
-    /* Initiate Magnify Function
-    with the id of the image, and the strength of the magnifier glass:*/
+    // Initiate Magnify Function with the id of the image, and the 
+    // strength of the magnifier glass.
     // magnify("refimage", 3);
-    // magnify("refimage1", 3);
-    // magnify("refimage2", 3);
-    // magnify("refimage3", 3);
-    magnifies(["refimage", "refimage1", "refimage2", "refimage3"], 3);
+    magnifies(["gt_image", "method1_image", "method2_image", "method3_image"], 3, 2);
 </script>
 
 <script src="./src/js/magnifier.js"></script>
@@ -635,4 +572,100 @@
     imageZoom("ground_truth", ["zoomed-barf_rgb", "zoomed-ibrnet_rgb", "zoomed-dbarf_rgb" ], num_images); 
 </script>
 
-</body><grammarly-desktop-integration data-grammarly-shadow-root="true"></grammarly-desktop-integration></html>
+<script>
+    function takeImageQualityScreenshot() {
+        // Get the target div
+        const divToCapture = document.getElementById('imageQualityScreenshotDiv');
+
+        // Use html2canvas to capture the content of the div
+        html2canvas(divToCapture, { useCORS: true }).then(canvas => {
+            // Convert the canvas content to a data URL
+            const dataUrl = canvas.toDataURL('image/png');
+
+            // Create a link element to download the screenshot
+            const downloadLink = document.createElement('a');
+            downloadLink.href = dataUrl;
+            downloadLink.download = 'screenshot.png';
+
+            // Append the link to the document and trigger the download
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+
+            // Clean up: remove the link from the document
+            document.body.removeChild(downloadLink);
+        });
+    }
+
+    function takeImageMagnifyScreenshot() {
+        // Get the target div
+        const divToCapture = document.getElementById('imageMagnifyScreenshotDiv');
+            
+        // Use html2canvas to capture the content of the div
+        html2canvas(divToCapture, { useCORS: true }).then(canvas => {
+            // Convert the canvas content to a data URL
+            const dataUrl = canvas.toDataURL('image/png');
+            
+            // Create a link element to download the screenshot
+            const downloadLink = document.createElement('a');
+            downloadLink.href = dataUrl;
+            downloadLink.download = 'screenshot.png';
+            
+            // Append the link to the document and trigger the download
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            
+            // Clean up: remove the link from the document
+            document.body.removeChild(downloadLink);
+        });
+    }
+
+    function takeImageTableScreenshot() {
+        // Get the target div
+        const divToCapture = document.getElementById('imageTableDiv');
+            
+        // Use html2canvas to capture the content of the div
+        html2canvas(divToCapture, { useCORS: true }).then(canvas => {
+            // Convert the canvas content to a data URL
+            const dataUrl = canvas.toDataURL('image/png');
+            
+            // Create a link element to download the screenshot
+            const downloadLink = document.createElement('a');
+            downloadLink.href = dataUrl;
+            downloadLink.download = 'screenshot.png';
+            
+            // Append the link to the document and trigger the download
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            
+            // Clean up: remove the link from the document
+            document.body.removeChild(downloadLink);
+        });
+    }
+
+    function takeImageSliderScreenshot() {
+        // Get the target div
+        const divToCapture = document.getElementById('imageSliderScreenshotDiv');
+                        
+        // Use html2canvas to capture the content of the div
+        html2canvas(divToCapture, { useCORS: true }).then(canvas => {
+            // Convert the canvas content to a data URL
+            const dataUrl = canvas.toDataURL('image/png');
+                            
+            // Create a link element to download the screenshot
+            const downloadLink = document.createElement('a');
+            downloadLink.href = dataUrl;
+            downloadLink.download = 'screenshot.png';
+                            
+            // Append the link to the document and trigger the download
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+                            
+            // Clean up: remove the link from the document
+            document.body.removeChild(downloadLink);
+        });
+    }
+</script>
+
+</body>
+<grammarly-desktop-integration data-grammarly-shadow-root="true"></grammarly-desktop-integration>
+</html>
